@@ -30,3 +30,6 @@ Bổ sung thêm 1 băng chuyền thứ 2 để nhận kết quả
 
 4. Phase 4 <br/>
 Bổ sung một vài filter cơ bản: chọn loại status code muốn lấy, muốn bỏ, chọn content length muốn bỏ.
+
+5. Phase 5 <br />
+Chuyển đổi sang môi trường dòng lệnh 

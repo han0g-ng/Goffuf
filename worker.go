@@ -15,13 +15,19 @@ type Result struct {
 	Word          string
 }
 
-func sendRequest(url string, word string) Result {
+func sendRequest(method string, url string, word string) Result {
 	client := http.Client{
 		Timeout: 5 * time.Second,
 	}
 
+	req, err := http.NewRequest(method, url, nil)
+
+	if err != nil {
+		return Result{Err: err, Word: word}
+	}
+
 	start := time.Now()
-	resp, err := client.Get(url)
+	resp, err := client.Do(req)
 	duration := time.Since(start)
 
 	if err != nil {
@@ -39,25 +45,25 @@ func sendRequest(url string, word string) Result {
 	}
 }
 
-func StartWorkerPool(threads int, targetPattern string, wordChan <-chan string, resultChan chan<- Result, opts FilterOptions) {
+func StartWorkerPool(cfg *Config, wordChan <-chan string, resultChan chan<- Result) {
 	var wg sync.WaitGroup
 
-	for i := 1; i <= threads; i++ {
+	for i := 1; i <= cfg.Threads; i++ {
 		wg.Add(1)
-		go runWorker(i, targetPattern, wordChan, resultChan, &wg, opts)
+		go runWorker(cfg, wordChan, resultChan, &wg)
 	}
 
 	wg.Wait()
 }
 
-func runWorker(id int, targetPattern string, wordChan <-chan string, resultChan chan<- Result, wg *sync.WaitGroup, opts FilterOptions) {
+func runWorker(cfg *Config, wordChan <-chan string, resultChan chan<- Result, wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	for word := range wordChan {
-		url := strings.ReplaceAll(targetPattern, "FUZZ", word)
-		res := sendRequest(url, word)
+		url := strings.ReplaceAll(cfg.URL, "FUZZ", word)
+		res := sendRequest(cfg.Method, url, word)
 
-		if opts.IsValid(res) {
+		if cfg.Filters.IsValid(res) {
 			resultChan <- res
 		}		
 	}

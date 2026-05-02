@@ -8,31 +8,24 @@ import (
 
 
 func main() {
-	targetPattern := "https://cybershare.league.cyberjutsu-lab.tech/FUZZ"
-	wordlistPath := "D:\\tools\\ffuf\\fuzz.txt"
-	threads := 10
+	cfg := ParseFlags()
 
-	filters := FilterOptions{
-		MatchCodes:  []int{200, 301, 302, 403, 500},
-		FilterCodes: []int{404},
-	}
-
-	wordChan, err := ReadWordlist(wordlistPath)
-
+	wordChan, err := ReadWordlist(cfg.Wordlist)
 	if err != nil {
-		fmt.Printf("Lỗi khởi tạo wordlist: %v\n", err)
+		fmt.Printf("Lỗi đọc wordlist: %v\n", err)
 		return
 	}
 
 	resultChan := make(chan Result)
 
-	fmt.Printf("Bắt đầu Fuzzing với %d workers...\n", threads)
+	fmt.Printf("\nBắt đầu Fuzzing tới: %s\n", cfg.URL)
+	fmt.Printf("Method: %s | Threads: %d | Wordlist: %s\n", cfg.Method, cfg.Threads, cfg.Wordlist)
 	fmt.Println(strings.Repeat("-", 60))
 
 	printerDone := StartPrinter(resultChan)
 
 	go func(){
-		StartWorkerPool(threads, targetPattern, wordChan, resultChan, filters)
+		StartWorkerPool(cfg, wordChan, resultChan)
 		close(resultChan)
 
 	}()
