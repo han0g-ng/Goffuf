@@ -12,6 +12,11 @@ func main() {
 	wordlistPath := "D:\\tools\\ffuf\\fuzz.txt"
 	threads := 10
 
+	filters := FilterOptions{
+		MatchCodes:  []int{200, 301, 302, 403, 500},
+		FilterCodes: []int{404},
+	}
+
 	wordChan, err := ReadWordlist(wordlistPath)
 
 	if err != nil {
@@ -27,7 +32,7 @@ func main() {
 	printerDone := StartPrinter(resultChan)
 
 	go func(){
-		StartWorkerPool(threads, targetPattern, wordChan, resultChan)
+		StartWorkerPool(threads, targetPattern, wordChan, resultChan, filters)
 		close(resultChan)
 
 	}()

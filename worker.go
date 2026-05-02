@@ -39,25 +39,26 @@ func sendRequest(url string, word string) Result {
 	}
 }
 
-func StartWorkerPool(threads int, targetPattern string, wordChan <-chan string, resultChan chan<- Result) {
+func StartWorkerPool(threads int, targetPattern string, wordChan <-chan string, resultChan chan<- Result, opts FilterOptions) {
 	var wg sync.WaitGroup
 
 	for i := 1; i <= threads; i++ {
 		wg.Add(1)
-		go runWorker(i, targetPattern, wordChan, resultChan, &wg)
+		go runWorker(i, targetPattern, wordChan, resultChan, &wg, opts)
 	}
 
 	wg.Wait()
 }
 
-func runWorker(id int, targetPattern string, wordChan <-chan string, resultChan chan<- Result, wg *sync.WaitGroup) {
+func runWorker(id int, targetPattern string, wordChan <-chan string, resultChan chan<- Result, wg *sync.WaitGroup, opts FilterOptions) {
 	defer wg.Done()
 
 	for word := range wordChan {
 		url := strings.ReplaceAll(targetPattern, "FUZZ", word)
-
 		res := sendRequest(url, word)
 
-		resultChan <- res
+		if opts.IsValid(res) {
+			resultChan <- res
+		}		
 	}
 }

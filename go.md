@@ -27,3 +27,6 @@ Các điểm hạn chế: <br />
 * Có nhiều công nhân nhưng chỉ có 1 băng chuyền dữ liệu
 * Các worker còn đang kiêm thêm nhiệm vụ in kết quả thay vì chỉ thực hiện request.
 Bổ sung thêm 1 băng chuyền thứ 2 để nhận kết quả
+
+4. Phase 4 <br/>
+Bổ sung một vài filter cơ bản: chọn loại status code muốn lấy, muốn bỏ, chọn content length muốn bỏ.
