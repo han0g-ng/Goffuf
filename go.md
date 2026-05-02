@@ -10,4 +10,10 @@ Một HTTP request mới phải trải qua rất nhiều bước: DNS lookup, TC
 Phải đóng phần body để http.Transport biết được để reuse connection.
 
 
-2. Phase 2
+2. Phase 2 <br/>
+Bắt đầu lấy wordlist, duyệt từng keyword
+Trong url mục tiêu, bắt đầu sử dụng cơ chế có từ khoá FUZZ
+Ta thay thế FUZZ bằng keyword trong wordlist và tiến hành truy vấn tới (vẫn sử dụng cách gửi request như trong phase 1) <br />
+Lưu ý cơ chế của goroutine: Nếu sử dụng unbuffered channel, việc gửi ch <- x và <-ch (gửi và nhận) phải xảy ra đồng thời. Ta cần 2 goroutine để chạy riêng từng cái, từ đó mới không xảy ra deadlock. Việc tạo thêm go func() là để tạo 1 goroutine khác, chạy song song với goroutine cũ, trong goroutine mới này chạy send, còn cái cũ chạy receive.
+
+3. Phase 3

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"net/http"
 	"time"
 )
@@ -37,15 +38,28 @@ func sendRequest(url string) Result {
 }
 
 func main() {
-	targetURL := "https://www.google.com"
+	targetURL := "https://www.google.com/FUZZ"
+	wordlistPath := "D:\\tools\\ffuf\\fuzz.txt"
 
-	fmt.Println("Sending request to:", targetURL)
-	fmt.Println("-------------------------------------------")
-	res := sendRequest(targetURL)
+	wordChan, err := ReadWordlist(wordlistPath)
 
-	if res.Err != nil {
-		fmt.Printf("Error occurred: %v\n", res.Err)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
 	}
-	
-	fmt.Printf("Status Code: %d | Length %d | Time %v\n", res.StatusCode, res.ContentLength, res.ResponseTime)
+
+	fmt.Printf("%-15s | %-8s | %-10s | %s\n", "Payload", "Status", "Length", "Time")
+    fmt.Println(strings.Repeat("-", 50))
+
+	for word := range wordChan {
+		url := strings.ReplaceAll(targetURL, "FUZZ", word)
+
+		res := sendRequest(url)
+
+		if res.Err != nil {
+			fmt.Printf("%-15s | ERROR\n", word)
+			continue
+		}
+
+		fmt.Printf("%-15s | %-8d | %-10d %v\n", word, res.StatusCode, res.ContentLength, res.ResponseTime)
+	}
 }
