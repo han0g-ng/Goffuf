@@ -16,4 +16,14 @@ Trong url mục tiêu, bắt đầu sử dụng cơ chế có từ khoá FUZZ
 Ta thay thế FUZZ bằng keyword trong wordlist và tiến hành truy vấn tới (vẫn sử dụng cách gửi request như trong phase 1) <br />
 Lưu ý cơ chế của goroutine: Nếu sử dụng unbuffered channel, việc gửi ch <- x và <-ch (gửi và nhận) phải xảy ra đồng thời. Ta cần 2 goroutine để chạy riêng từng cái, từ đó mới không xảy ra deadlock. Việc tạo thêm go func() là để tạo 1 goroutine khác, chạy song song với goroutine cũ, trong goroutine mới này chạy send, còn cái cũ chạy receive.
 
-3. Phase 3
+3. Phase 3 <br/>
+Chuyển từ xử lý tuần tự sang đồng thời. <br/>
+Kiến trúc hệ thống: Mô hình Producer - Consumer<br/>
+Tránh tạo ra quá nhiều luồng (goroutines), ta chỉ tận dụng số lượng có hạn và cố định. <br/>
+* **Producer**: đọc wordlist theo luồng, đọc từng dòng trong file và đẩy keyword vào một kênh.
+* **Job Queue**: Băng chuyền dữ liệu: dữ liệu được đưa vào 1 đầu bởi producer, và lấy ra bởi consumer
+* **Worker Pool**: Đứng đợi ở đầu ra dữ liệu, các worker rảnh rỗi sẽ lấy dữ liệu đó và làm việc, tránh được quá trình nhàn rỗi. <br />
+Các điểm hạn chế: <br />
+* Có nhiều công nhân nhưng chỉ có 1 băng chuyền dữ liệu
+* Các worker còn đang kiêm thêm nhiệm vụ in kết quả thay vì chỉ thực hiện request.
+Bổ sung thêm 1 băng chuyền thứ 2 để nhận kết quả

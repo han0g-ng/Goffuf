@@ -3,63 +3,40 @@ package main
 import (
 	"fmt"
 	"strings"
-	"net/http"
-	"time"
 )
 
-type Result struct {
-	StatusCode 		int
-	ContentLength 	int64
-	ResponseTime 	time.Duration
-	Err 			error	
-}
 
-func sendRequest(url string) Result {
-	client := http.Client{
-		Timeout: 10 * time.Second,
-	}
-
-	start := time.Now()
-	resp, err := client.Get(url)
-	duration := time.Since(start)
-
-	if err != nil {
-		return Result{Err: err}
-	}
-
-	defer resp.Body.Close()
-
-	return Result{
-		StatusCode: 		resp.StatusCode,
-		ContentLength: 	resp.ContentLength,
-		ResponseTime: 	duration,
-		Err: 				nil,
-	}
-}
 
 func main() {
-	targetURL := "https://www.google.com/FUZZ"
+	targetPattern := "https://cybershare.league.cyberjutsu-lab.tech/FUZZ"
 	wordlistPath := "D:\\tools\\ffuf\\fuzz.txt"
+	threads := 10
 
 	wordChan, err := ReadWordlist(wordlistPath)
 
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		fmt.Printf("Lỗi khởi tạo wordlist: %v\n", err)
+		return
 	}
 
-	fmt.Printf("%-15s | %-8s | %-10s | %s\n", "Payload", "Status", "Length", "Time")
-    fmt.Println(strings.Repeat("-", 50))
+	resultChan := make(chan Result)
 
-	for word := range wordChan {
-		url := strings.ReplaceAll(targetURL, "FUZZ", word)
+	fmt.Printf("Bắt đầu Fuzzing với %d workers...\n", threads)
+	fmt.Println(strings.Repeat("-", 60))
 
-		res := sendRequest(url)
+	printerDone := StartPrinter(resultChan)
 
-		if res.Err != nil {
-			fmt.Printf("%-15s | ERROR\n", word)
-			continue
-		}
+	go func(){
+		StartWorkerPool(threads, targetPattern, wordChan, resultChan)
+		close(resultChan)
 
-		fmt.Printf("%-15s | %-8d | %-10d %v\n", word, res.StatusCode, res.ContentLength, res.ResponseTime)
-	}
+	}()
+
+	<-printerDone
+
+
+	fmt.Println(strings.Repeat("-", 60))
+
+	fmt.Println("Hoàn tất")
+	
 }
